@@ -18,7 +18,6 @@ module Relay
 
       def initialize
         @status = Status::DISCONNECTED
-        # @spawn = Peer.spawn("peer")
       end
 
       def on_message(message)
@@ -32,10 +31,9 @@ module Relay
               puts "Peer::HandshakeCompleted #{conn}"
               @status = Status::CONNECTED
               conn.peer = self
-
-              Concurrent::TimerTask.new(execution_interval: 3) do
+              Concurrent::TimerTask.new(execution_interval: 60) do
                 reference << Event[Timeout, {}, conn]
-              end.execute
+              end.execute if conn.is_a? ::Relay::IO::Client
             end),
             (on Object do
               puts "status:#{@status}:#{message}"

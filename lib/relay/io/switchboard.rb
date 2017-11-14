@@ -27,7 +27,7 @@ module Relay
       end
 
       def on_message(message)
-        puts message
+        puts "Switchboard#on_message #{message}"
         match message, (on ~NewConnection.call(remote_node_id: String, address: '0.0.0.0', new_channel_opt: any) do
           raise 'can not connect local address.'
         end), (on ~NewConnection.call(remote_node_id: String, address: String, new_channel_opt: any) do |remote_node_id, address, _|
@@ -37,7 +37,6 @@ module Relay
           # peer = ::Relay::IO::Peer.new
           # @peers[remote_node_id] = peer
         end), (on HandshakeCompleted.(~any) do |conn|
-          puts "Switchboard#on_message HandshakeCompleted"
           # peer = ::Relay::IO::Peer.new(connection)
           # @peers[remote_node_id] = peer
           peer = ::Relay::IO::Peer.spawn('peer')

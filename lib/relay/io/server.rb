@@ -19,10 +19,8 @@ module Relay
       end
 
       def receive_data(data)
-        puts "Relay::IO::Server#receive_data #{data}"
-        puts data.unpack('H*')
+        puts "Relay::IO::Server#receive_data #{data.unpack('H*')}"
         return if data.strip.empty?
-        # send_data "echo : #{data}\n"
         @handler.handle(data)
       end
 

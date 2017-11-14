@@ -12,6 +12,7 @@ module Relay
 
       def post_init
         puts "Relay::IO::Client#post_init"
+        @handler = MessageHandler.new(self)
       end
 
       def connection_completed
@@ -21,6 +22,8 @@ module Relay
 
       def receive_data(data)
         puts "Relay::IO::Client#receive_data #{data.unpack("H*")}"
+        return if data.strip.empty?
+        @handler.handle(data)
       end
 
       def unbind(reason = nil)

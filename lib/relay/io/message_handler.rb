@@ -53,10 +53,10 @@ module Relay
 
       def on_pong(payload)
         pong = Relay::Wire::Pong.load(payload)
-        rest = payload[ping.size..-1]
+        rest = payload[pong.size..-1]
 
         @conn.peer << Relay::IO::Peer::Event[Relay::Wire::MessageCodec::Pong, pong, @conn]
-        [ping, rest]
+        [pong, rest]
       end
     end
   end

@@ -25,6 +25,10 @@ module Relay
       def to_payload
         [::Relay::Wire::MessageTypes::PONG, byteslen, ignored].pack("S2a*")
       end
+
+      def to_s
+        to_payload.bth
+      end
     end
   end
 end

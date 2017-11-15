@@ -21,7 +21,7 @@ module Relay
       end
 
       def receive_data(data)
-        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#receive_data #{data.unpack('H*')}")
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#receive_data #{data.bth}")
         return if data.strip.empty?
         @handler.handle(data)
       end
@@ -31,7 +31,7 @@ module Relay
       end
 
       def send_message(message)
-        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#send_message #{message.to_payload}")
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#send_message #{message.to_s}")
         send_data(message.to_payload)
       end
     end

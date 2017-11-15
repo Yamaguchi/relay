@@ -36,8 +36,8 @@ module Relay
           # @peers[remote_node_id] = peer
           peer = ::Relay::IO::Peer.spawn('peer')
           peer << HandshakeCompleted[conn]
-        end), (on Array.call(:terminated, any) do
-
+        end), (on Object do
+          log(Logger::WARN, "NO OP")
         end)
       end
 

@@ -17,6 +17,8 @@ module Relay
     autoload :Switchboard, 'relay/io/switchboard'
   end
 
+  autoload :String, 'relay/utils/string'
+
   module Wire
     autoload :MessageCodec, 'relay/wire/message_codec'
     autoload :MessageTypes, 'relay/wire/message_types'

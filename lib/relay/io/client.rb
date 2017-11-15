@@ -3,6 +3,8 @@
 module Relay
   module IO
     class Client < EM::Connection
+      include Relay::Wire::MessageCodec
+      include Concurrent::Concern::Logging
 
       attr_accessor :peer
 
@@ -11,27 +13,27 @@ module Relay
       end
 
       def post_init
-        puts "Relay::IO::Client#post_init"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#post_init")
         @handler = MessageHandler.new(self)
       end
 
       def connection_completed
-        puts "Relay::IO::Client#connection_completed"
-        @switchboard << Relay::IO::Switchboard::HandshakeCompleted[self]
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#connection_completed")
+        @switchboard << HandshakeCompleted[self]
       end
 
       def receive_data(data)
-        puts "Relay::IO::Client#receive_data #{data.unpack("H*")}"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#receive_data #{data.unpack("H*")}")
         return if data.strip.empty?
         @handler.handle(data)
       end
 
       def unbind(reason = nil)
-        puts "Relay::IO::Client#unbind #{reason}"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#unbind #{reason}")
       end
 
       def send_message(message)
-        puts "Relay::IO::Client#send_message #{message.to_payload}"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#send_message #{message.to_payload}")
         send_data(message.to_payload)
       end
     end

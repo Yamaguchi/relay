@@ -2,59 +2,51 @@ module Relay
   module IO
     class Peer < Concurrent::Actor::RestartingContext
       include Algebrick::Matching
-      include Algebrick::Types
+      include Relay::Wire::MessageCodec
 
       module Status
         DISCONNECTED = 1
         INITIALIZING = 2
         CONNECTED = 3
       end
-      Algebrick.type do
-        variants NewConnection = type { fields! remote_node_id: String, address: String, new_channel_opt: Hash },
-        HandshakeCompleted = type { fields! connection: EM::Connection },
-        Timeout = atom,
-        Event = type { fields! message_type: Object, data: Object, conn: Object }
-      end
+
 
       def initialize
         @status = Status::DISCONNECTED
       end
 
       def on_message(message)
-        puts @status
-        # binding.pry
-        puts "Peer#on_message #{message}"
+        log(Logger::DEBUG, "status:#{@status}:#{message}")
         case @status
         when Status::DISCONNECTED
           match message,
             (on HandshakeCompleted.(~any) do |conn|
-              puts "Peer::HandshakeCompleted #{conn}"
               @status = Status::CONNECTED
               conn.peer = self
               Concurrent::TimerTask.new(execution_interval: 60) do
-                reference << Event[Timeout, {}, conn]
+                reference << Timeout[conn]
               end.execute if conn.is_a? ::Relay::IO::Client
             end),
             (on Object do
-              puts "status:#{@status}:#{message}"
+              log(Logger::WARN, "NO OP")
             end)
         when Status::INITIALIZING
         when Status::CONNECTED
           match message,
-            (on Event.(message_type: Timeout, data: Object, conn: ~any) do |conn|
-              puts "Peer#on_message Timeout #{conn}"
+            (on Timeout.(~any) do |conn|
+              log(Logger::DEBUG, "Peer#on_message Timeout #{conn}")
               conn.send_message(::Relay::Wire::Ping.new(num_pong_bytes: 1, byteslen: 2, ignored: "\x00\x00"))
             end),
-            (on Event.(message_type: ::Relay::Wire::MessageCodec::Ping, data: ~any, conn: ~any) do |ping, conn|
-              puts "Peer#on_message Relay::Wire::MessageCodec::Ping #{ping} #{conn}"
+            (on Event.(message_type: Ping, data: ~any, conn: ~any) do |ping, conn|
+              log(Logger::DEBUG, "Peer#on_message Relay::Wire::MessageCodec::Ping #{ping} #{conn}")
               pong = Relay::Wire::Pong.new(byteslen: ping.num_pong_bytes, ignored: "\x00" * ping.num_pong_bytes)
               conn.send_message(pong)
             end),
-            (on Event.(message_type: ::Relay::Wire::MessageCodec::Pong, data: ~any, conn: ~any) do |pong, conn|
-              puts "Peer#on_message Relay::Wire::MessageCodec::Pong #{pong} #{conn}"
+            (on Event.(message_type: Pong, data: ~any, conn: ~any) do |pong, conn|
+              log(Logger::DEBUG, "Peer#on_message Relay::Wire::MessageCodec::Pong #{pong} #{conn}")
             end),
             (on Object do
-              puts "status:#{@status}:#{message}"
+              log(Logger::WARN, "NO OP")
             end)
         end
       end

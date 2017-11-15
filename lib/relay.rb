@@ -25,9 +25,11 @@ module Relay
   end
 end
 
+Concurrent.use_simple_logger Logger::DEBUG
+
 Thread.start do
   EM.run do
-    switchboard = Relay::IO::Switchboard.spawn(:switchboard)
+    switchboard = Relay::IO::Switchboard.spawn(:server)
     EM.start_server('0.0.0.0', 9735, Relay::IO::Server, switchboard)
   end
 end

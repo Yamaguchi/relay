@@ -5,6 +5,8 @@ require 'socket'
 module Relay
   module IO
     class Server < EM::Connection
+      include Relay::Wire::MessageCodec
+      include Concurrent::Concern::Logging
 
       attr_accessor :peer
 
@@ -13,28 +15,25 @@ module Relay
       end
 
       def post_init
-        puts "Relay::IO::Server#post_init"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#post_init")
         @handler = MessageHandler.new(self)
-        @switchboard << Relay::IO::Switchboard::HandshakeCompleted[self]
+        @switchboard << HandshakeCompleted[self]
       end
 
       def receive_data(data)
-        puts "Relay::IO::Server#receive_data #{data.unpack('H*')}"
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#receive_data #{data.unpack('H*')}")
         return if data.strip.empty?
         @handler.handle(data)
       end
 
-      def send_message(message)
-        puts "Relay::IO::Server#send_message #{message.to_payload}"
-        send_data(message.to_payload)
+      def unbind(reason = nil)
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#unbind #{reason}")
       end
 
-      def unbind
-        puts "Relay::IO::Server#unbind"
+      def send_message(message)
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Server#send_message #{message.to_payload}")
+        send_data(message.to_payload)
       end
     end
   end
 end
-# EM.run do
-#   EM.start_server(HOST, PORT, Server)
-# end

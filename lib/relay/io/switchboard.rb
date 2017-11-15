@@ -6,17 +6,12 @@ module Relay
     # Ties network connections to peers.
     class Switchboard < Concurrent::Actor::RestartingContext
       include Algebrick::Matching
+      include Relay::Wire::MessageCodec
 
       module Status
         DISCONNECTED = 1
         INITIALIZING = 2
         CONNECTED = 3
-      end
-
-      Algebrick.type do
-        variants NewConnection = type { fields! remote_node_id: String, address: String, new_channel_opt: Hash }
-        HandshakeCompleted = type { fields! connection: Object }
-        Terminated = atom
       end
 
       attr_reader :peers, :connections
@@ -27,7 +22,7 @@ module Relay
       end
 
       def on_message(message)
-        puts "Switchboard#on_message #{message}"
+        log(Logger::DEBUG, "Switchboard#on_message #{message}")
         match message, (on ~NewConnection.call(remote_node_id: String, address: '0.0.0.0', new_channel_opt: any) do
           raise 'can not connect local address.'
         end), (on ~NewConnection.call(remote_node_id: String, address: String, new_channel_opt: any) do |remote_node_id, address, _|
@@ -40,7 +35,7 @@ module Relay
           # peer = ::Relay::IO::Peer.new(connection)
           # @peers[remote_node_id] = peer
           peer = ::Relay::IO::Peer.spawn('peer')
-          peer << ::Relay::IO::Peer::HandshakeCompleted[conn]
+          peer << HandshakeCompleted[conn]
         end), (on Array.call(:terminated, any) do
 
         end)

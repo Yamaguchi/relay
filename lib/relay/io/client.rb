@@ -13,12 +13,12 @@ module Relay
       end
 
       def post_init
-        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#post_init")
+        log(Logger::DEBUG, @switchboard.path, 'Relay::IO::Client#post_init')
         @handler = MessageHandler.new(self)
       end
 
       def connection_completed
-        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#connection_completed")
+        log(Logger::DEBUG, @switchboard.path, 'Relay::IO::Client#connection_completed')
         @switchboard << HandshakeCompleted[self]
       end
 
@@ -33,7 +33,7 @@ module Relay
       end
 
       def send_message(message)
-        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#send_message #{message.to_s}")
+        log(Logger::DEBUG, @switchboard.path, "Relay::IO::Client#send_message #{message}")
         send_data(message.to_payload)
       end
     end

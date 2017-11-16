@@ -12,7 +12,6 @@ module Relay
 
       def self.load(payload)
         byteslen, rest = payload.unpack('Sa*')
-        ignored = rest.byteslice(0, byteslen)
         return nil if rest.bytesize < byteslen
         ignored = rest.byteslice(0, byteslen)
         new(byteslen: byteslen, ignored: ignored)
@@ -23,7 +22,7 @@ module Relay
       end
 
       def to_payload
-        [::Relay::Wire::MessageTypes::PONG, byteslen, ignored].pack("S2a*")
+        [::Relay::Wire::MessageTypes::PONG, byteslen, ignored].pack('S2a*')
       end
 
       def to_s

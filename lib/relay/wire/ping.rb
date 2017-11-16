@@ -23,7 +23,7 @@ module Relay
       end
 
       def to_payload
-        [::Relay::Wire::MessageTypes::PING, num_pong_bytes, byteslen, ignored].pack("S3a*")
+        [::Relay::Wire::MessageTypes::PING, num_pong_bytes, byteslen, ignored].pack('S3a*')
       end
 
       def to_s

@@ -23,9 +23,9 @@ module Relay
 
       def on_message(message)
         log(Logger::DEBUG, "Switchboard#on_message #{message}")
-        match message, (on ~NewConnection.call(remote_node_id: String, address: '0.0.0.0', new_channel_opt: any) do
+        match message, (on ~NewConnection.(remote_node_id: String, address: '0.0.0.0', new_channel_opt: any) do
           raise 'can not connect local address.'
-        end), (on ~NewConnection.call(remote_node_id: String, address: String, new_channel_opt: any) do |remote_node_id, address, _|
+        end), (on ~NewConnection do |remote_node_id, address, _|
           connection = connect(address, 9735)
           @connections[remote_node_id] = connection
 
@@ -37,7 +37,7 @@ module Relay
           peer = ::Relay::IO::Peer.spawn('peer')
           peer << HandshakeCompleted[conn]
         end), (on Object do
-          log(Logger::WARN, "NO OP")
+          log(Logger::WARN, 'NO OP')
         end)
       end
 

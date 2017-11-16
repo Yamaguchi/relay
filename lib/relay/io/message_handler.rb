@@ -26,7 +26,7 @@ module Relay
       def parse(buffer)
         return if buffer.bytesize < MESSAGE_TYPE_SIZE
         type = buffer.unpack('S')[0]
-        raise "error" unless supported_message_types.include?(type)
+        raise 'error' unless supported_message_types.include?(type)
         payload = buffer.byteslice(MESSAGE_TYPE_SIZE, buffer.bytesize)
         [type, payload]
       end
@@ -35,7 +35,6 @@ module Relay
         case type
         when Relay::Wire::MessageTypes::PING then on_ping(payload)
         when Relay::Wire::MessageTypes::PONG then on_pong(payload)
-        else nil
         end
       end
 

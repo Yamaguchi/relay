@@ -1,14 +1,21 @@
 # frozen_string_literal: true
 
 require 'relay/version'
+
+require 'securerandom'
+
+require 'algebrick'
+require 'algebrick/serializer'
 require 'concurrent'
 require 'concurrent-edge'
 require 'eventmachine'
-require 'algebrick'
-require 'algebrick/serializer'
-require 'pry'
+require 'leveldb'
 
 module Relay
+  module DB
+    autoload :Peer, 'relay/db/peer'
+  end
+
   module IO
     autoload :Client, 'relay/io/client'
     autoload :MessageHandler, 'relay/io/message_handler'
@@ -25,13 +32,18 @@ module Relay
     autoload :Ping, 'relay/wire/ping'
     autoload :Pong, 'relay/wire/pong'
   end
+
+  @local_node_id = SecureRandom.hex(32)
+  def self.local_node_id
+    @local_node_id
+  end
 end
 
 Concurrent.use_simple_logger Logger::DEBUG
 
 Thread.start do
   EM.run do
-    switchboard = Relay::IO::Switchboard.spawn(:server)
-    EM.start_server('0.0.0.0', 9735, Relay::IO::Server, switchboard)
+    switchboard = Relay::IO::Switchboard.spawn(:switchboard)
+    Relay::IO::Server.start_server('0.0.0.0', 9735, switchboard)
   end
 end

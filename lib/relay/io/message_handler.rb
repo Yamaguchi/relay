@@ -3,10 +3,13 @@
 module Relay
   module IO
     class MessageHandler
+      NODE_ID_SIZE = 32
       MESSAGE_TYPE_SIZE = 2
-      def initialize(conn)
+      def initialize(conn, host, port)
         @buffer = ''
         @conn = conn
+        @host = host
+        @port = port
       end
 
       def handle(data)
@@ -15,20 +18,21 @@ module Relay
 
       def handle_internal(data)
         @buffer += data
-        type, payload = parse(@buffer)
+        type, payload, remote_node_id = parse(@buffer)
         return unless type
         message, rest = handle_message(type, payload)
         return unless message
+        @conn << Relay::Wire::MessageCodec::Received[remote_node_id, message, @host, @port]
         @buffer = ''
         handle_internal(rest) if rest&.bytesize&.positive?
       end
 
       def parse(buffer)
-        return if buffer.bytesize < MESSAGE_TYPE_SIZE
-        type = buffer.unpack('S')[0]
+        return if buffer.bytesize < NODE_ID_SIZE + MESSAGE_TYPE_SIZE
+        remote_node_id, type, = buffer.unpack('H64Sa*')
         raise 'error' unless supported_message_types.include?(type)
-        payload = buffer.byteslice(MESSAGE_TYPE_SIZE, buffer.bytesize)
-        [type, payload]
+        payload = buffer.byteslice(NODE_ID_SIZE + MESSAGE_TYPE_SIZE, buffer.bytesize)
+        [type, payload, remote_node_id]
       end
 
       def handle_message(type, payload)
@@ -45,17 +49,13 @@ module Relay
       def on_ping(payload)
         ping = Relay::Wire::Ping.load(payload)
         rest = payload[ping.size..-1]
-
-        @conn.peer << Relay::IO::Peer::Event[Relay::Wire::MessageCodec::Ping, ping, @conn]
-        [ping, rest]
+        [Relay::Wire::MessageCodec::Ping[ping], rest]
       end
 
       def on_pong(payload)
         pong = Relay::Wire::Pong.load(payload)
         rest = payload[pong.size..-1]
-
-        @conn.peer << Relay::IO::Peer::Event[Relay::Wire::MessageCodec::Pong, pong, @conn]
-        [pong, rest]
+        [Relay::Wire::MessageCodec::Pong[pong], rest]
       end
     end
   end

@@ -33,7 +33,14 @@ module Relay
     autoload :Pong, 'relay/wire/pong'
   end
 
-  @local_node_id = SecureRandom.hex(32)
+  @local_node_id = if File.exists?('seed.dat')
+    id = File.read('seed.dat')
+  else
+    id = SecureRandom.hex(32)
+    File.write('seed.dat', id)
+    id
+  end
+
   def self.local_node_id
     @local_node_id
   end
